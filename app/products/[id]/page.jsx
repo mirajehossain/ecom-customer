@@ -76,14 +76,19 @@ export default function ProductDetailPage() {
                         {/* Product Image */}
                         <div className="relative">
                             <div className="sticky top-24">
-                                {product.image ? (
+                                {(selectedVariant?.image || product.image) ? (
                                     <div className="relative overflow-hidden rounded-3xl shadow-2xl">
                                         <img
-                                            src={product.image}
-                                            alt={product.name}
+                                            src={selectedVariant?.image || product.image}
+                                            alt={selectedVariant?.name || product.name}
                                             className="w-full h-auto hover:scale-105 transition-transform duration-500"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                        {selectedVariant && (
+                                            <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+                                                {selectedVariant.name}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="w-full h-96 bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl flex items-center justify-center shadow-2xl">
@@ -106,7 +111,7 @@ export default function ProductDetailPage() {
                             <div className="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
                                 <div className="flex items-baseline gap-4">
                                     <span className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                                        ${parseFloat(product.price).toFixed(2)}
+                                        ${parseFloat(selectedVariant?.price || product.price).toFixed(2)}
                                     </span>
                                     {product.compare_price && (
                                         <>
@@ -114,11 +119,16 @@ export default function ProductDetailPage() {
                                                 ${parseFloat(product.compare_price).toFixed(2)}
                                             </span>
                                             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                                                SAVE {Math.round((1 - product.price / product.compare_price) * 100)}%
+                                                SAVE {Math.round((1 - (selectedVariant?.price || product.price) / product.compare_price) * 100)}%
                                             </span>
                                         </>
                                     )}
                                 </div>
+                                {selectedVariant && (
+                                    <div className="mt-3 text-sm text-purple-700 font-semibold">
+                                        ✨ Variant: {selectedVariant.name}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="mb-8 p-6 bg-gray-50 rounded-2xl">
@@ -131,13 +141,15 @@ export default function ProductDetailPage() {
                             <div className="mb-8 flex items-center gap-6 p-4 bg-blue-50 rounded-xl">
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">SKU</p>
-                                    <p className="font-bold text-gray-800">{product.sku || 'N/A'}</p>
+                                    <p className="font-bold text-gray-800">{selectedVariant?.sku || product.sku || 'N/A'}</p>
                                 </div>
                                 <div className="h-8 w-px bg-gray-300"></div>
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">Availability</p>
-                                    <p className={`font-bold ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {product.stock_quantity > 0 ? `${product.stock_quantity} in stock` : 'Out of stock'}
+                                    <p className={`font-bold ${(selectedVariant?.stock !== undefined ? selectedVariant.stock : product.stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {(selectedVariant?.stock !== undefined ? selectedVariant.stock : product.stock_quantity) > 0
+                                            ? `${selectedVariant?.stock !== undefined ? selectedVariant.stock : product.stock_quantity} in stock`
+                                            : 'Out of stock'}
                                     </p>
                                 </div>
                             </div>
