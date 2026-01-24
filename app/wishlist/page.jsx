@@ -22,12 +22,12 @@ export default function WishlistPage() {
     };
 
     const handleAddToCart = (product) => {
-        cartStore.getState().add(product);
+        cartStore.add(product);
         alert('Added to cart!');
     };
 
     const handleMoveToCart = (product) => {
-        cartStore.getState().add(product);
+        cartStore.add(product);
         wishlistStore.getState().remove(product.id);
         alert('Moved to cart!');
     };

@@ -3,23 +3,23 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import Header from './components/Header';
-import { productsAPI, categoriesAPI } from '@/lib/api';
+import { productsAPI } from '@/lib/api';
 
 export default function Home() {
-  // Fetch featured products
-  const { data: productsData, isLoading: productsLoading } = useQuery({
+  // Fetch featured products (using the dedicated featured endpoint)
+  const { data: featuredData, isLoading: featuredLoading } = useQuery({
     queryKey: ['featured-products'],
+    queryFn: () => productsAPI.getFeatured(8),
+  });
+
+  // Fetch latest products
+  const { data: productsData, isLoading: productsLoading } = useQuery({
+    queryKey: ['latest-products'],
     queryFn: () => productsAPI.getAll({ page: 1, limit: 8 }),
   });
 
-  // Fetch categories
-  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoriesAPI.getAll(),
-  });
-
+  const featuredProducts = featuredData?.products || [];
   const products = productsData?.products || [];
-  const categories = categoriesData?.data || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
@@ -70,58 +70,105 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <section className="py-20 -mt-8 relative z-10">
+      {/* Featured Products Section */}
+      {(featuredLoading || featuredProducts.length > 0) && (
+        <section className="py-20 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-                Shop by <span className="gradient-text">Category</span>
-              </h2>
-              <p className="text-gray-600 text-lg">Explore our diverse range of products</p>
+            <div className="flex justify-between items-center mb-12">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">⭐ Featured</span> Products
+                </h2>
+                <p className="text-gray-600">Our top picks, handpicked just for you</p>
+              </div>
+              <Link
+                href="/products?featured=true"
+                className="hidden md:flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold hover:from-amber-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg"
+              >
+                View All <span>→</span>
+              </Link>
             </div>
-            {categoriesLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="skeleton h-32 rounded-2xl"></div>
+
+            {featuredLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="skeleton h-80 rounded-2xl"></div>
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {categories.slice(0, 8).map((category, index) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredProducts.map((product, index) => (
                   <Link
-                    key={category.id}
-                    href={`/products?category=${category.id}`}
-                    className="group card-hover bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl border border-gray-100"
+                    key={product.id}
+                    href={`/products/${product.id}`}
+                    className="card-hover bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-amber-200 group relative"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
-                    <div className="text-center">
-                      <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-purple-600 transition">
-                        {category.name}
+                    {/* Featured Badge */}
+                    <div className="absolute top-3 left-3 z-10 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                      ⭐ Featured
+                    </div>
+                    <div className="relative overflow-hidden">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-56 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                          <span className="text-4xl">⭐</span>
+                        </div>
+                      )}
+                      {product.stock_quantity > 0 ? (
+                        <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                          ✓ In Stock
+                        </div>
+                      ) : (
+                        <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                          Sold Out
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-amber-600 transition">
+                        {product.name}
                       </h3>
+                      <div className="flex items-center justify-between">
+                        <p className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                          ${parseFloat(product.price).toFixed(2)}
+                        </p>
+                        <div className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-semibold">
+                          Buy Now
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 ))}
               </div>
             )}
+
+            <div className="text-center mt-8 md:hidden">
+              <Link
+                href="/products?featured=true"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-3 rounded-full font-semibold hover:from-amber-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg"
+              >
+                View All Featured <span>→</span>
+              </Link>
+            </div>
           </div>
         </section>
       )}
 
-      {/* Featured Products Section */}
+      {/* Latest Products Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-12">
             <div>
               <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
-                <span className="gradient-text">Featured</span> Products
+                <span className="gradient-text">Latest</span> Products
               </h2>
-              <p className="text-gray-600">Handpicked just for you</p>
+              <p className="text-gray-600">Fresh arrivals for you</p>
             </div>
             <Link
               href="/products"

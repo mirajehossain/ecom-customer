@@ -1,17 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { cartStore } from '@/lib/cart';
 import { wishlistStore } from '@/lib/wishlist';
+import { categoriesAPI, buildCategoryTree } from '@/lib/api';
 
 export default function Header() {
     const router = useRouter();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+    const [activeCategoryDropdown, setActiveCategoryDropdown] = useState(null);
     const [cartCount, setCartCount] = useState(0);
     const [wishlistCount, setWishlistCount] = useState(0);
+
+    // Fetch categories
+    const { data: categoriesData } = useQuery({
+        queryKey: ['categories'],
+        queryFn: () => categoriesAPI.getAll(),
+    });
+
+    // Build hierarchical category tree
+    const categoryTree = useMemo(() => {
+        return buildCategoryTree(categoriesData);
+    }, [categoriesData]);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -55,20 +69,15 @@ export default function Header() {
 
     return (
         <header className="glass sticky top-0 z-50 shadow-xl backdrop-blur-lg border-b border-white/20">
-            <div className="container mx-auto px-4 py-4">
+            {/* Top Row - Logo and Actions */}
+            <div className="container mx-auto px-4 py-3">
                 <div className="flex justify-between items-center">
                     <Link href="/" className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent hover:from-purple-700 hover:to-pink-700 transition transform hover:scale-105">
                         🛍️ Unique Style Zone
                     </Link>
 
-                    <nav className="hidden md:flex items-center space-x-8">
-                        <Link href="/" className="text-gray-700 hover:text-purple-600 font-semibold transition-all transform hover:scale-110">
-                            Home
-                        </Link>
-                        <Link href="/products" className="text-gray-700 hover:text-purple-600 font-semibold transition-all transform hover:scale-110">
-                            Products
-                        </Link>
-
+                    {/* Right side actions */}
+                    <div className="hidden md:flex items-center space-x-4">
                         <Link href="/wishlist" className="relative group" title="Wishlist">
                             <div className="p-2 hover:bg-pink-50 rounded-xl transition">
                                 <svg
@@ -119,12 +128,11 @@ export default function Header() {
                             <div className="relative">
                                 <button
                                     onClick={() => setShowMenu(!showMenu)}
-                                    className="flex items-center space-x-2 px-5 py-2.5 rounded-xl hover:bg-purple-50 transition-all transform hover:scale-105 border-2 border-transparent hover:border-purple-200"
+                                    className="flex items-center space-x-2 px-4 py-2 rounded-xl hover:bg-purple-50 transition-all border-2 border-transparent hover:border-purple-200"
                                 >
                                     <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                                         👤
                                     </div>
-                                    <span className="text-gray-700 font-semibold">Account</span>
                                     <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
@@ -162,12 +170,12 @@ export default function Header() {
                         ) : (
                             <Link
                                 href="/login"
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-full font-bold hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg"
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2.5 rounded-full font-bold hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg"
                             >
                                 Login
                             </Link>
                         )}
-                    </nav>
+                    </div>
 
                     {/* Mobile menu button */}
                     <button
@@ -179,50 +187,208 @@ export default function Header() {
                         </svg>
                     </button>
                 </div>
+            </div>
 
-                {/* Mobile menu */}
-                {showMenu && (
-                    <div className="md:hidden mt-4 pt-4 border-t">
-                        <div className="flex flex-col space-y-2">
-                            <Link href="/" className="text-gray-700 hover:text-blue-600 py-2">Home</Link>
-                            <Link href="/products" className="text-gray-700 hover:text-blue-600 py-2">Products</Link>
-                            <Link href="/wishlist" className="relative text-gray-700 hover:text-blue-600 py-2 flex items-center">
-                                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                                <span>Wishlist</span>
-                                {wishlistCount > 0 && (
-                                    <span className="ml-2 bg-pink-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1">
-                                        {wishlistCount > 99 ? '99+' : wishlistCount}
-                                    </span>
-                                )}
-                            </Link>
-                            <Link href="/cart" className="relative text-gray-700 hover:text-blue-600 py-2 flex items-center">
-                                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                <span>Cart</span>
-                                {cartCount > 0 && (
-                                    <span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1">
-                                        {cartCount > 99 ? '99+' : cartCount}
-                                    </span>
-                                )}
-                            </Link>
-                            {isLoggedIn ? (
-                                <>
-                                    <Link href="/profile" className="text-gray-700 hover:text-blue-600 py-2" onClick={() => setShowMenu(false)}>👤 Profile</Link>
-                                    <Link href="/orders" className="text-gray-700 hover:text-blue-600 py-2" onClick={() => setShowMenu(false)}>📦 My Orders</Link>
-                                    <button onClick={handleLogout} className="text-left text-red-600 py-2">Logout</button>
-                                </>
-                            ) : (
-                                <Link href="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold text-center">
-                                    Login
+            {/* Category Navigation Bar - Desktop */}
+            <nav className="hidden md:block bg-gradient-to-r from-purple-600 to-pink-600">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-center space-x-1">
+                        {/* Home Link */}
+                        <Link 
+                            href="/" 
+                            className="px-4 py-3 text-white font-semibold hover:bg-white/20 transition-all rounded-lg"
+                        >
+                            Home
+                        </Link>
+                        
+                        {/* All Products Link */}
+                        <Link 
+                            href="/products" 
+                            className="px-4 py-3 text-white font-semibold hover:bg-white/20 transition-all rounded-lg"
+                        >
+                            All Products
+                        </Link>
+
+                        {/* Category Links */}
+                        {categoryTree.map((category) => (
+                            <div
+                                key={category.id}
+                                className="relative"
+                                onMouseEnter={() => setActiveCategoryDropdown(category.id)}
+                                onMouseLeave={() => setActiveCategoryDropdown(null)}
+                            >
+                                <Link
+                                    href={`/products?category=${category.id}`}
+                                    className="flex items-center gap-1 px-4 py-3 text-white font-semibold hover:bg-white/20 transition-all rounded-lg"
+                                >
+                                    {category.name}
+                                    {category.subCategories && category.subCategories.length > 0 && (
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    )}
                                 </Link>
+
+                                {/* Subcategories Dropdown */}
+                                {category.subCategories && category.subCategories.length > 0 && activeCategoryDropdown === category.id && (
+                                    <div className="absolute left-0 top-full mt-0 w-56 bg-white rounded-b-xl shadow-2xl border border-purple-100 py-2 z-50 animate-fadeIn">
+                                        {/* Link to view all in this category */}
+                                        <Link
+                                            href={`/products?category=${category.id}`}
+                                            className="block px-4 py-2 text-purple-600 hover:bg-purple-50 transition font-semibold border-b border-gray-100"
+                                            onClick={() => setActiveCategoryDropdown(null)}
+                                        >
+                                            All {category.name}
+                                        </Link>
+                                        {category.subCategories.map((subCategory) => (
+                                            <Link
+                                                key={subCategory.id}
+                                                href={`/products?category=${subCategory.id}`}
+                                                className="block px-4 py-2.5 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition"
+                                                onClick={() => setActiveCategoryDropdown(null)}
+                                            >
+                                                {subCategory.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </nav>
+
+            {/* Mobile menu */}
+            {showMenu && (
+                <div className="md:hidden border-t bg-white">
+                    <div className="container mx-auto px-4 py-4">
+                        <div className="flex flex-col space-y-1">
+                            <Link 
+                                href="/" 
+                                className="text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg font-medium" 
+                                onClick={() => setShowMenu(false)}
+                            >
+                                🏠 Home
+                            </Link>
+                            <Link 
+                                href="/products" 
+                                className="text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg font-medium" 
+                                onClick={() => setShowMenu(false)}
+                            >
+                                🛍️ All Products
+                            </Link>
+                            
+                            {/* Mobile Categories */}
+                            {categoryTree.length > 0 && (
+                                <div className="border-t border-gray-100 pt-2 mt-2">
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider px-4 py-2">
+                                        Categories
+                                    </div>
+                                    {categoryTree.map((category) => (
+                                        <div key={category.id}>
+                                            <Link 
+                                                href={`/products?category=${category.id}`}
+                                                className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg font-medium"
+                                                onClick={() => setShowMenu(false)}
+                                            >
+                                                {category.name}
+                                            </Link>
+                                            {category.subCategories && category.subCategories.length > 0 && (
+                                                <div className="ml-4 border-l-2 border-purple-200">
+                                                    {category.subCategories.map((subCat) => (
+                                                        <Link 
+                                                            key={subCat.id}
+                                                            href={`/products?category=${subCat.id}`}
+                                                            className="block text-gray-500 hover:text-purple-600 hover:bg-purple-50 py-2 px-4 text-sm"
+                                                            onClick={() => setShowMenu(false)}
+                                                        >
+                                                            {subCat.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
+                            
+                            {/* Account & Actions */}
+                            <div className="border-t border-gray-100 pt-2 mt-2">
+                                <Link 
+                                    href="/wishlist" 
+                                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg flex items-center justify-between" 
+                                    onClick={() => setShowMenu(false)}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                        Wishlist
+                                    </span>
+                                    {wishlistCount > 0 && (
+                                        <span className="bg-pink-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-2">
+                                            {wishlistCount > 99 ? '99+' : wishlistCount}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link 
+                                    href="/cart" 
+                                    className="text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg flex items-center justify-between" 
+                                    onClick={() => setShowMenu(false)}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        Cart
+                                    </span>
+                                    {cartCount > 0 && (
+                                        <span className="bg-purple-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-2">
+                                            {cartCount > 99 ? '99+' : cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </div>
+                            
+                            {/* Auth Section */}
+                            <div className="border-t border-gray-100 pt-2 mt-2">
+                                {isLoggedIn ? (
+                                    <>
+                                        <Link 
+                                            href="/profile" 
+                                            className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg" 
+                                            onClick={() => setShowMenu(false)}
+                                        >
+                                            👤 Profile
+                                        </Link>
+                                        <Link 
+                                            href="/orders" 
+                                            className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 py-3 px-4 rounded-lg" 
+                                            onClick={() => setShowMenu(false)}
+                                        >
+                                            📦 My Orders
+                                        </Link>
+                                        <button 
+                                            onClick={handleLogout} 
+                                            className="w-full text-left text-red-600 hover:bg-red-50 py-3 px-4 rounded-lg"
+                                        >
+                                            🚪 Logout
+                                        </button>
+                                    </>
+                                ) : (
+                                    <Link 
+                                        href="/login" 
+                                        className="block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold text-center mt-2" 
+                                        onClick={() => setShowMenu(false)}
+                                    >
+                                        Login / Register
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </header>
     );
 }
