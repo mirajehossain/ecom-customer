@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import Header from './components/Header';
+import FeaturedSlider from './components/FeaturedSlider';
 import { productsAPI } from '@/lib/api';
 
 export default function Home() {
@@ -69,6 +70,9 @@ export default function Home() {
           </svg>
         </div>
       </section>
+
+      {/* Featured Products Slider Section */}
+      <FeaturedSlider products={featuredProducts} isLoading={featuredLoading} />
 
       {/* Featured Products Section */}
       {(featuredLoading || featuredProducts.length > 0) && (
@@ -331,7 +335,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-700 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Unique Style Zone. All rights reserved. Made with ❤️</p>
+            <p>&copy; {new Date().getFullYear()} Unique Style Zone. All rights reserved</p>
           </div>
         </div>
       </footer>
