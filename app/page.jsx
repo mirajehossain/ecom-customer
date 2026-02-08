@@ -113,9 +113,9 @@ export default function Home() {
                       ⭐ Featured
                     </div>
                     <div className="relative overflow-hidden">
-                      {product.image ? (
+                      {product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image ? (
                         <img
-                          src={product.image}
+                          src={product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image}
                           alt={product.name}
                           className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -204,9 +204,9 @@ export default function Home() {
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="relative overflow-hidden">
-                    {product.image ? (
+                    {product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image ? (
                       <img
-                        src={product.image}
+                        src={product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image}
                         alt={product.name}
                         className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                       />

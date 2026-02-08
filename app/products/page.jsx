@@ -9,7 +9,7 @@ import { productsAPI, categoriesAPI } from '@/lib/api';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  
+
   // Initialize state from URL parameters
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState(() => searchParams.get('search') || '');
@@ -68,7 +68,7 @@ function ProductsPageContent() {
     // Check for data existence, not just products array (to handle empty arrays)
     if (data?.products !== undefined && !isFetching) {
       const filtersChanged = prevFilterKeyRef.current !== filterKey;
-      
+
       if (filtersChanged) {
         // Filters changed - reset to page 1 and clear products
         prevFilterKeyRef.current = filterKey;
@@ -109,7 +109,7 @@ function ProductsPageContent() {
     const options = [];
     const parents = categories.filter(cat => !cat.parent_id || cat.parent_id === 0);
     const children = categories.filter(cat => cat.parent_id && cat.parent_id !== 0);
-    
+
     parents.forEach(parent => {
       options.push({ id: parent.id, name: parent.name, isParent: true });
       children
@@ -118,7 +118,7 @@ function ProductsPageContent() {
           options.push({ id: child.id, name: `└ ${child.name}`, isChild: true, parentId: parent.id });
         });
     });
-    
+
     return options;
   }, [categories]);
 
@@ -179,7 +179,7 @@ function ProductsPageContent() {
                 <>
                   <li className="text-gray-400">/</li>
                   <li>
-                    <Link 
+                    <Link
                       href={`/products?category=${parentCategory.id}`}
                       className="text-purple-600 hover:text-purple-800 transition"
                     >
@@ -212,7 +212,7 @@ function ProductsPageContent() {
             )}
           </h1>
           <p className="text-gray-600 text-lg">
-            {currentCategory 
+            {currentCategory
               ? `Explore our ${currentCategory.name.toLowerCase()} collection`
               : 'Browse through our curated collection'
             }
@@ -283,8 +283,8 @@ function ProductsPageContent() {
                 >
                   <option value="">All Categories</option>
                   {categoryOptions.map((cat) => (
-                    <option 
-                      key={cat.id} 
+                    <option
+                      key={cat.id}
                       value={cat.id}
                       className={cat.isChild ? 'pl-4' : 'font-semibold'}
                     >
@@ -399,9 +399,9 @@ function ProductsPageContent() {
                       ⭐ Featured
                     </div>
                   )}
-                  {product.image ? (
+                  {(product.images?.[0]?.image_url || product.image) ? (
                     <img
-                      src={product.image}
+                      src={product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image}
                       alt={product.name}
                       className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                     />

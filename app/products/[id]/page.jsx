@@ -6,7 +6,8 @@ import { productsAPI } from '@/lib/api';
 import { cartStore } from '@/lib/cart';
 import { wishlistStore } from '@/lib/wishlist';
 import Header from '@/app/components/Header';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import ProductImageGallery from '@/app/components/ProductImageGallery';
 
 export default function ProductDetailPage() {
     const { id } = useParams();
@@ -14,12 +15,6 @@ export default function ProductDetailPage() {
     const [addedToCart, setAddedToCart] = useState(false);
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [isInWishlist, setIsInWishlist] = useState(false);
-    const [zoomLens, setZoomLens] = useState({ x: 0, y: 0, w: 0, h: 0, show: false });
-    const imageContainerRef = useRef(null);
-
-    const ZOOM_LEVEL = 2.5;
-    const LENS_SIZE = 140;
-
     const { data, isLoading } = useQuery({
         queryKey: ['product', id],
         queryFn: () => productsAPI.getById(id),
@@ -42,19 +37,6 @@ export default function ProductDetailPage() {
         cartStore.add(productToAdd);
         setAddedToCart(true);
         setTimeout(() => setAddedToCart(false), 2000);
-    };
-
-    const handleImageMouseMove = (e) => {
-        const el = imageContainerRef.current;
-        if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        setZoomLens({ x, y, w: rect.width, h: rect.height, show: true });
-    };
-
-    const handleImageMouseLeave = () => {
-        setZoomLens((prev) => ({ ...prev, show: false }));
     };
 
     const handleToggleWishlist = () => {
@@ -93,44 +75,19 @@ export default function ProductDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                         {/* Product Image */}
                         <div className="relative flex justify-center lg:justify-start">
-                            <div className="sticky top-24 max-w-sm w-full">
-                                {(selectedVariant?.image || product.image) ? (
-                                    <div
-                                        ref={imageContainerRef}
-                                        onMouseMove={handleImageMouseMove}
-                                        onMouseLeave={handleImageMouseLeave}
-                                        className="relative overflow-hidden rounded-2xl shadow-xl aspect-square bg-gray-50 cursor-zoom-in"
-                                    >
-                                        <img
-                                            src={selectedVariant?.image || product.image}
-                                            alt={selectedVariant?.name || product.name}
-                                            className="w-full h-full object-contain pointer-events-none"
-                                            draggable={false}
-                                        />
-                                        {zoomLens.show && zoomLens.w > 0 && (
-                                            <div
-                                                className="absolute pointer-events-none rounded-full border-2 border-white shadow-2xl bg-no-repeat"
-                                                style={{
-                                                    width: LENS_SIZE,
-                                                    height: LENS_SIZE,
-                                                    left: zoomLens.x - LENS_SIZE / 2,
-                                                    top: zoomLens.y - LENS_SIZE / 2,
-                                                    backgroundImage: `url(${selectedVariant?.image || product.image})`,
-                                                    backgroundSize: `${zoomLens.w * ZOOM_LEVEL}px ${zoomLens.h * ZOOM_LEVEL}px`,
-                                                    backgroundPosition: `${-zoomLens.x * ZOOM_LEVEL + LENS_SIZE / 2}px ${-zoomLens.y * ZOOM_LEVEL + LENS_SIZE / 2}px`,
-                                                }}
-                                            />
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
-                                        {selectedVariant && (
-                                            <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg pointer-events-none">
-                                                {selectedVariant.name}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="aspect-square max-h-80 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center shadow-xl">
-                                        <span className="text-8xl">🎁</span>
+                            <div className="sticky top-24 max-w-sm w-full relative">
+                                <ProductImageGallery
+                                    images={
+                                        selectedVariant?.images?.length > 0
+                                            ? selectedVariant.images
+                                            : product.images || []
+                                    }
+                                    fallbackImage={selectedVariant?.image || product.image}
+                                    fallbackAlt={selectedVariant?.name || product.name}
+                                />
+                                {selectedVariant && (
+                                    <div className="absolute top-3 right-3 z-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                                        {selectedVariant.name}
                                     </div>
                                 )}
                             </div>

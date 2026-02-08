@@ -7,8 +7,8 @@ import Link from 'next/link';
 
 export default function FeaturedSlider({ products, isLoading }) {
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { 
-      loop: true, 
+    {
+      loop: true,
       align: 'start',
       slidesToScroll: 1,
     },
@@ -93,7 +93,7 @@ export default function FeaturedSlider({ products, isLoading }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          
+
           <button
             onClick={scrollNext}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-12 h-12 bg-white rounded-full shadow-xl flex items-center justify-center hover:bg-purple-50 hover:scale-110 transition-all border border-gray-100 group"
@@ -116,9 +116,9 @@ export default function FeaturedSlider({ products, isLoading }) {
                   <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:border-purple-200 transition-all duration-300 transform hover:-translate-y-2">
                     {/* Product Image */}
                     <div className="relative h-64 md:h-72 overflow-hidden">
-                      {product.image ? (
+                      {product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image ? (
                         <img
-                          src={product.image}
+                          src={product.images?.find((i) => i.is_primary)?.image_url || product.images?.[0]?.image_url || product.image}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -127,7 +127,7 @@ export default function FeaturedSlider({ products, isLoading }) {
                           <span className="text-6xl">✨</span>
                         </div>
                       )}
-                      
+
                       {/* Overlay on Hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="absolute bottom-4 left-4 right-4">
@@ -183,11 +183,10 @@ export default function FeaturedSlider({ products, isLoading }) {
             <button
               key={index}
               onClick={() => scrollTo(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === selectedIndex
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${index === selectedIndex
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 w-8'
                   : 'bg-gray-300 hover:bg-gray-400'
-              }`}
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
